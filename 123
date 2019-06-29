@@ -1,0 +1,107 @@
+这里是压测软件的主要功能
+
+vim locustfile.py
+
+from locust import HttpLocust, TaskSet
+
+#登陆操作
+
+def login(l):
+
+l.client.post("/phpadmin/index.php", {"pma_username":"hugw", "pma_password":"RedHat"})
+
+#登出操作
+
+def logout(l):
+
+l.client.post("/phpadmin/logout.php", {"db":"&", "token":"be2cb767a5829a398ef5a4c0dcafe504"})
+
+#请求index
+
+def index(l):
+
+l.client.get('/phpadmin/index.php')
+
+class UserBehavior(TaskSet):
+
+tasks = {index}
+
+#执行登陆和登出
+
+def on_start(self):
+
+login(self)
+
+def on_stop(self):
+
+logout(self)
+
+class WebsiteUser(HttpLocust):
+
+task_set = UserBehavior
+
+min_wait = 3000
+
+max_wait = 6000
+
+启动压测程序
+
+如果配置文件名字是locustfile.py，那么直接运行就好
+
+启动成功会监听8089端口，
+
+这里的 http://192.168.1.9 是要压测的网站域名
+
+[root@slave locust]# locust -H http://192.168.1.9
+
+[2018-04-12 19:41:37,086] slave/INFO/locust.main: Starting web monitor at *:8089
+
+[2018-04-12 19:41:37,086] slave/INFO/locust.main: Starting Locust 0.8.1
+
+配置压测集群（可选）
+
+启动压测主程序，跟上面一样，后面加上参数 --master
+
+启动成功会监听8089端口，
+
+这里的 http://192.168.1.9 是要压测的网站域名
+
+[root@slave locust]# locust -H http://192.168.1.9 --master
+
+[2018-04-12 22:20:12,889] slave/INFO/locust.main: Starting web monitor at *:8089
+
+[2018-04-12 22:20:12,891] slave/INFO/locust.main: Starting Locust 0.8.1
+
+[2018-04-12 22:20:47,669] slave/INFO/locust.runners: Client 'k8s_cf9d5e7c4238f74363180e5b3dcb0ae4' reported as ready. Currently 1 clients ready to swarm.
+
+[2018-04-12 22:21:02,066] slave/INFO/locust.runners: Sending hatch jobs to 1 ready clients
+
+[2018-04-12 22:21:12,069] slave/INFO/locust.runners: Resetting stats
+
+启动slave
+
+先把 locustfile.py 分发到slave机器上，安装locust，然后启动
+
+[root@k8s locust]# locust -H http://192.168.1.9 --slave --master-host=master_IP
+
+[2018-04-12 02:21:48,045] k8s/INFO/locust.main: Starting Locust 0.8.1
+
+[2018-04-12 02:22:02,487] k8s/INFO/locust.runners: Hatching and swarming 20 clients at the rate 2 clients/s...
+
+[2018-04-12 02:22:12,509] k8s/INFO/locust.runners: All locusts hatched: WebsiteUser: 20
+
+[2018-04-12 02:22:12,509] k8s/INFO/locust.runners: Resetting stats
+
+然后登陆master压测就行了
+
+
+
+
+User-Agent	PostmanRuntime/7.15.0
+Accept	*/*
+Cache-Control	no-cache
+Postman-Token	f7667845-d3a3-4e19-8f10-41fd531bbed4
+Host	titan-fall.test.dasouche-inc.net
+cookie	_security_token_inc=91561699463649479; JSESSIONID=71955E9539708DE93E8452B00AD7B542
+accept-encoding	gzip, deflate
+Connection	keep-alive
